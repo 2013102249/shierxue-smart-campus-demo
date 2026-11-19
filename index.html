@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>十二学智慧校园 · AI 驱动的课后学习与校园管理平台</title>
+<style>
+/* ============ 基础 ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --primary:#7C3AED; --primary-dark:#6D28D9; --primary-soft:#F3EEFE;
+  --blue:#2563EB; --blue-soft:#EAF0FE;
+  --grad:linear-gradient(135deg,#7C3AED 0%,#2563EB 100%);
+  --bg:#F5F6FA; --card:#FFFFFF; --text:#1E2233; --muted:#6B7280; --line:#E9EBF2;
+  --green:#10B981; --green-soft:#E7F8F1; --red:#EF4444; --red-soft:#FDEDED;
+  --orange:#F59E0B; --orange-soft:#FEF4E2; --cyan:#06B6D4;
+  --radius:14px; --shadow:0 2px 12px rgba(30,34,51,.06);
+  --side-w:236px; --top-h:62px;
+}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+.hidden{display:none!important}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#D6D9E4;border-radius:4px}
+
+/* ============ 欢迎页 ============ */
+#welcome{position:fixed;inset:0;background:radial-gradient(1200px 700px at 15% 10%,#3B2A7A 0%,transparent 60%),radial-gradient(1000px 700px at 90% 90%,#123B8F 0%,transparent 55%),#171332;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50}
+#welcome .glow{position:absolute;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(124,58,237,.35),transparent 70%);filter:blur(10px);animation:float 7s ease-in-out infinite}
+#welcome .glow.g2{right:-120px;bottom:-160px;left:auto;background:radial-gradient(circle,rgba(37,99,235,.35),transparent 70%);animation-delay:-3s}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-24px)}}
+.w-badge{display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border:1px solid rgba(255,255,255,.25);border-radius:99px;color:#C9C3F2;font-size:13px;letter-spacing:2px;margin-bottom:26px;background:rgba(255,255,255,.06)}
+.w-title{font-size:44px;font-weight:800;color:#fff;letter-spacing:2px}
+.w-title .hl{background:linear-gradient(90deg,#A78BFA,#60A5FA);-webkit-background-clip:text;background-clip:text;color:transparent}
+.w-sub{color:#9CA3D8;margin:14px 0 44px;font-size:15px;letter-spacing:1px}
+.w-cards{display:flex;gap:20px;z-index:1}
+.w-card{width:170px;padding:26px 18px 22px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(8px);color:#fff;text-align:center;transition:.25s;cursor:pointer}
+.w-card:hover{transform:translateY(-6px);background:rgba(255,255,255,.13);box-shadow:0 14px 34px rgba(0,0,0,.35)}
+.w-card .ico{width:54px;height:54px;margin:0 auto 14px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;background:var(--grad)}
+.w-card h3{font-size:16px;margin-bottom:6px}
+.w-card p{font-size:12px;color:#B7B1E4;line-height:1.6}
+.w-foot{position:absolute;bottom:26px;color:#6B67A0;font-size:12px;letter-spacing:1px}
+
+/* ============ 布局 ============ */
+#app{display:flex;height:100vh;overflow:hidden}
+#side{width:var(--side-w);background:linear-gradient(180deg,#211A4D 0%,#2A2262 55%,#1E2A66 100%);color:#CFCBF2;display:flex;flex-direction:column;flex-shrink:0}
+.logo{display:flex;align-items:center;gap:10px;padding:18px 18px 14px}
+.logo .mark{width:36px;height:36px;border-radius:10px;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px;box-shadow:0 4px 12px rgba(124,58,237,.45)}
+.logo b{color:#fff;font-size:15px;display:block}
+.logo span{font-size:11px;color:#8E88C8}
+#nav{flex:1;overflow-y:auto;padding:6px 12px}
+.nav-group{font-size:11px;color:#7D77B5;padding:14px 10px 6px;letter-spacing:1px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;margin-bottom:2px;font-size:13.5px;transition:.15s;color:#C6C2EC}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.active{background:var(--grad);color:#fff;font-weight:600;box-shadow:0 4px 12px rgba(124,58,237,.4)}
+.nav-item .em{width:20px;text-align:center}
+.side-foot{padding:14px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:#7D77B5;line-height:1.8}
+#main{flex:1;display:flex;flex-direction:column;min-width:0}
+#topbar{height:var(--top-h);background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 22px;gap:14px;flex-shrink:0}
+#crumb{font-size:15px;font-weight:600}
+#crumb small{color:var(--muted);font-weight:400;margin-left:10px;font-size:12px}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.role-chip{display:flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid var(--line);border-radius:99px;font-size:13px;background:#FAFBFF}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--grad);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600}
+#view{flex:1;overflow-y:auto;padding:22px}
+
+/* ============ 通用组件 ============ */
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+.page-head h2{font-size:20px;font-weight:700}
+.page-head .desc{color:var(--muted);font-size:13px;margin-top:5px}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;border:1px solid #F0F1F7}
+.card h3{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card h3 .tag{margin-left:auto;font-weight:400}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+.stat{background:#fff;border-radius:var(--radius);padding:16px 18px;border:1px solid #F0F1F7;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.stat .lb{color:var(--muted);font-size:12.5px}
+.stat .v{font-size:26px;font-weight:800;margin-top:6px;font-variant-numeric:tabular-nums}
+.stat .sub{font-size:12px;margin-top:5px}
+.stat::after{content:"";position:absolute;right:-18px;top:-18px;width:70px;height:70px;border-radius:50%;background:var(--primary-soft);opacity:.7}
+.stat.blue::after{background:var(--blue-soft)}.stat.green::after{background:var(--green-soft)}.stat.orange::after{background:var(--orange-soft)}
+.up{color:var(--green)}.down{color:var(--red)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;font-size:13.5px;font-weight:500;transition:.2s}
+.btn-pri{background:var(--grad);color:#fff;box-shadow:0 4px 12px rgba(124,58,237,.3)}
+.btn-pri:hover{opacity:.9;transform:translateY(-1px)}
+.btn-ghost{border:1px solid var(--line);background:#fff;color:var(--text)}
+.btn-ghost:hover{border-color:var(--primary);color:var(--primary)}
+.btn-sm{padding:5px 12px;font-size:12.5px;border-radius:8px}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:500}
+.b-purple{background:var(--primary-soft);color:var(--primary)}
+.b-blue{background:var(--blue-soft);color:var(--blue)}
+.b-green{background:var(--green-soft);color:#059669}
+.b-red{background:var(--red-soft);color:var(--red)}
+.b-orange{background:var(--orange-soft);color:#D97706}
+.b-gray{background:#F1F2F7;color:#6B7280}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--muted);font-weight:500;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:11px 12px;border-bottom:1px solid #F3F4F9}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#FAFAFE}
+.prog{height:7px;border-radius:99px;background:#EEF0F6;overflow:hidden}
+.prog i{display:block;height:100%;border-radius:99px;background:var(--grad)}
+.tabs{display:inline-flex;background:#F1F2F7;border-radius:10px;padding:4px;gap:2px}
+.tabs button{padding:7px 18px;border-radius:8px;font-size:13px;color:var(--muted)}
+.tabs button.on{background:#fff;color:var(--primary);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.rule{display:flex;gap:8px;align-items:flex-start;background:var(--primary-soft);border:1px dashed #C9B6F5;color:#6D28D9;border-radius:10px;padding:10px 14px;font-size:12.5px;line-height:1.7}
+.list-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #F3F4F9}
+.list-row:last-child{border-bottom:none}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* ============ 座位图 ============ */
+.seat-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:9px}
+.seat{aspect-ratio:1;border-radius:9px;border:1.5px solid #E3E5F0;background:#fff;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:#9AA0B4;cursor:pointer;transition:.15s;user-select:none}
+.seat:hover{border-color:var(--primary);color:var(--primary)}
+.seat.taken{background:#EEF0F6;border-color:#EEF0F6;color:#C0C4D4;cursor:not-allowed}
+.seat.block{background:repeating-linear-gradient(45deg,#F6F7FB,#F6F7FB 4px,#EDEFF6 4px,#EDEFF6 8px);border-color:#EDEFF6;color:#C0C4D4;cursor:not-allowed}
+.seat.sel{background:var(--grad);border-color:var(--primary);color:#fff;font-weight:700;box-shadow:0 4px 10px rgba(124,58,237,.4)}
+.seat.mine{background:var(--blue);border-color:var(--blue);color:#fff}
+.podium{grid-column:1/-1;text-align:center;font-size:12px;color:#B4B8C8;padding:2px 0 6px;letter-spacing:6px}
+
+/* ============ 聊天 ============ */
+.chat-box{display:flex;flex-direction:column;gap:14px;min-height:300px}
+.msg{display:flex;gap:10px;max-width:86%}
+.msg .mv{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff}
+.msg .bubble{background:#F5F6FB;border-radius:4px 14px 14px 14px;padding:11px 14px;font-size:13.5px;line-height:1.75}
+.msg.me{align-self:flex-end;flex-direction:row-reverse}
+.msg.me .bubble{background:var(--grad);color:#fff;border-radius:14px 4px 14px 14px}
+.ai-step{border-left:3px solid var(--primary);background:#FBFAFF;padding:8px 12px;border-radius:0 8px 8px 0;margin-top:8px;font-size:13px}
+.ai-step b{color:var(--primary)}
+.typing::after{content:"▍";animation:blink .8s infinite;color:var(--primary)}
+@keyframes blink{50%{opacity:0}}
+
+/* ============ 时间轴 ============ */
+.tl{position:relative;padding-left:24px}
+.tl::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:#E7E4F6}
+.tl-item{position:relative;padding:0 0 20px 14px}
+.tl-item::before{content:"";position:absolute;left:-22px;top:4px;width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid var(--primary)}
+.tl-item .t{font-size:12px;color:var(--muted);margin-bottom:4px}
+.tl-item .d{font-size:13.5px;line-height:1.6}
+
+/* ============ 排课表 ============ */
+.tt{width:100%;border-collapse:separate;border-spacing:4px}
+.tt th{background:#F5F6FB;border-radius:8px;padding:8px;font-size:12px}
+.tt td{border-radius:8px;padding:9px 6px;font-size:12px;text-align:center;border:none;background:#F8F9FC;color:#565D75;line-height:1.4}
+.tt td.c1{background:#F1EAFD;color:#6D28D9}.tt td.c2{background:#EAF0FE;color:#1D4ED8}
+.tt td.c3{background:#E7F8F1;color:#047857}.tt td.c4{background:#FEF4E2;color:#B45309}
+.tt td.c5{background:#FDEDED;color:#B91C1C}
+.tt td.conflict{outline:2px solid var(--red);position:relative}
+
+/* ============ 会员卡 ============ */
+.plan{border:1.5px solid var(--line);border-radius:16px;padding:22px 20px;text-align:center;position:relative;transition:.2s;background:#fff}
+.plan:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(124,58,237,.15)}
+.plan.best{border-color:var(--primary);background:linear-gradient(180deg,#FBF9FF,#fff)}
+.plan .corner{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--grad);color:#fff;font-size:11px;padding:4px 14px;border-radius:99px}
+.plan .price{font-size:32px;font-weight:800;color:var(--primary);margin:10px 0 2px}
+.plan .price small{font-size:13px;color:var(--muted);font-weight:400}
+.plan ul{list-style:none;text-align:left;margin:16px 0;font-size:13px;color:#4B5163}
+.plan ul li{padding:6px 0;display:flex;gap:8px;align-items:center}
+.plan ul li::before{content:"✓";color:var(--green);font-weight:700}
+
+/* ============ Modal / Toast ============ */
+#mask{position:fixed;inset:0;background:rgba(20,16,50,.45);backdrop-filter:blur(3px);z-index:90;display:flex;align-items:center;justify-content:center}
+#modal{background:#fff;border-radius:18px;padding:26px 28px;width:440px;max-width:92vw;max-height:86vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.3);animation:pop .2s}
+@keyframes pop{from{transform:scale(.94);opacity:0}}
+#toast{position:fixed;top:76px;left:50%;transform:translateX(-50%) translateY(-16px);background:#221C4E;color:#fff;padding:11px 22px;border-radius:12px;font-size:13.5px;z-index:99;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast .ok{color:#6EE7B7;margin-right:6px}
+
+/* 事件流 */
+.evt{display:flex;gap:10px;padding:9px 0;border-bottom:1px dashed #EEEFF6;font-size:13px;align-items:flex-start}
+.evt:last-child{border-bottom:none}
+.evt .tm{color:var(--muted);font-variant-numeric:tabular-nums;flex-shrink:0;font-size:12px;width:44px}
+
+/* ============ 移动端：底部 Tab + 更多抽屉 ============ */
+#mobile-tab{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:60;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+.mtab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;color:#8A90A6;padding:3px 0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.mtab span{font-size:19px;line-height:1}
+.mtab.on{color:var(--primary);font-weight:600}
+.mtab.on span{transform:translateY(-1px)}
+#sheet-mask{position:fixed;inset:0;background:rgba(20,16,50,.4);z-index:80;opacity:0;pointer-events:none;transition:.25s}
+#sheet-mask.show{opacity:1;pointer-events:auto}
+#sheet{position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:22px 22px 0 0;padding:16px 18px calc(22px + env(safe-area-inset-bottom));transform:translateY(100%);transition:.3s cubic-bezier(.2,.8,.2,1);max-height:75vh;overflow-y:auto}
+#sheet-mask.show #sheet{transform:translateY(0)}
+.sheet-grip{width:40px;height:4px;border-radius:99px;background:#E3E5F0;margin:0 auto 14px}
+.sheet-item{display:flex;align-items:center;gap:12px;padding:13px 8px;border-bottom:1px solid #F3F4F9;font-size:15px;cursor:pointer}
+.sheet-item:last-child{border-bottom:none}
+.sheet-item .em{font-size:19px;width:24px;text-align:center}
+.sheet-item.active{color:var(--primary);font-weight:600}
+
+@media (max-width:1100px){.g4{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}}
+
+/* ============ 手机端适配（≤820px） ============ */
+@media (max-width:820px){
+  #side{display:none}
+  #mobile-tab{display:flex}
+  #view{padding:12px 12px calc(84px + env(safe-area-inset-bottom))}
+  #topbar{height:54px;padding:0 12px}
+  #topbar .badge.b-green{display:none}
+  #tb-user{display:none}
+  #crumb{font-size:14.5px}
+  #crumb small{display:none}
+  .grid{gap:12px;grid-template-columns:1fr!important}
+  .g4{grid-template-columns:1fr 1fr!important}
+  .card{padding:14px;border-radius:12px}
+  .stat{padding:13px 14px}
+  .stat .v{font-size:21px}
+  .page-head{flex-wrap:wrap;gap:10px;margin-bottom:14px}
+  .page-head h2{font-size:18px}
+  .page-head .desc{font-size:12px}
+  input,select,textarea{font-size:16px!important}  /* 防 iOS 聚焦缩放 */
+  table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap}
+  .tt td,.tt th{padding:7px 5px;font-size:11px}
+  .seat-grid{gap:5px}
+  .seat{font-size:8.5px;border-radius:6px;border-width:1px}
+  .plan .price{font-size:28px}
+  #modal{padding:20px;width:92vw;border-radius:16px}
+  #toast{top:60px;width:max-content;max-width:88vw}
+  /* 欢迎页 */
+  #welcome{padding:0 18px}
+  .w-title{font-size:30px;text-align:center}
+  .w-sub{font-size:13px;text-align:center;margin:12px 0 30px}
+  .w-badge{font-size:11px;margin-bottom:18px}
+  .w-cards{flex-wrap:wrap;justify-content:center;gap:12px;width:100%}
+  .w-card{width:calc(50% - 6px);max-width:170px;padding:20px 12px 16px}
+  .w-card .ico{width:46px;height:46px;font-size:22px;margin-bottom:10px}
+  .w-foot{bottom:14px;text-align:center;width:100%;font-size:10.5px;padding:0 12px}
+  .chat-box{min-height:240px}
+  .msg{max-width:94%}
+}
+</style>
+</head>
+<body>
+
+<!-- 欢迎页 / 角色选择 -->
+<div id="welcome">
+  <div class="glow"></div><div class="glow g2"></div>
+  <div class="w-badge">AI STUDY · SMART CAMPUS</div>
+  <div class="w-title">十二学<span class="hl">智慧校园</span></div>
+  <div class="w-sub">AI 驱动的课后学习与校园管理一体化平台 · 校 — 师 — 生 — 家 四方协同</div>
+  <div class="w-cards">
+    <div class="w-card" data-action="select-role" data-role="student"><div class="ico">🎒</div><h3>学生端</h3><p>AI 自习室 · 预约选座<br>AI 答疑 · 学习报告</p></div>
+    <div class="w-card" data-action="select-role" data-role="teacher"><div class="ico">📐</div><h3>教师端</h3><p>智能作业 · 错题聚合<br>学情看板 · 自习监测</p></div>
+    <div class="w-card" data-action="select-role" data-role="parent"><div class="ico">🏠</div><h3>家长端</h3><p>成长档案 · 学情报告<br>答疑会员 · 在线缴费</p></div>
+    <div class="w-card" data-action="select-role" data-role="admin"><div class="ico">🏫</div><h3>管理端</h3><p>数据看板 · 统一考勤<br>智能排课 · 校务审批</p></div>
+  </div>
+  <div class="w-foot">河南十二学教育科技有限公司 · 智慧校园 V1.0（演示原型，数据为模拟数据）</div>
+</div>
+
+<!-- 主应用 -->
+<div id="app" class="hidden">
+  <aside id="side">
+    <div class="logo"><div class="mark">12</div><div><b>十二学智慧校园</b><span id="school-name">明德中学 · 试点校</span></div></div>
+    <nav id="nav"></nav>
+    <div class="side-foot">AI 自习室 · 智慧教学<br>校园管理 · 家校互通<br><span style="color:#5B5590">P1 版本 · 数据仅存 7 天</span></div>
+  </aside>
+  <div id="main">
+    <header id="topbar">
+      <div id="crumb">数据看板</div>
+      <div class="tb-right">
+        <span class="badge b-green">● 系统运行正常 99.7%</span>
+        <div class="role-chip"><div class="avatar" id="tb-avatar">李</div><span id="tb-user">李建国</span><span style="color:#C0C4D4">|</span><span id="tb-role" style="color:var(--primary);font-weight:600">管理端</span></div>
+        <button class="btn btn-ghost btn-sm" data-action="exit">切换身份</button>
+      </div>
+    </header>
+    <div id="view"></div>
+  </div>
+</div>
+
+<!-- 移动端底部导航 & 更多抽屉 -->
+<nav id="mobile-tab"></nav>
+<div id="sheet-mask"><div id="sheet"><div class="sheet-grip"></div><div id="sheet-body"></div></div></div>
+
+<div id="toast"></div>
+<div id="mask" class="hidden"><div id="modal"></div></div>
+
+<script>
+/* ================================================================
+   十二学智慧校园 · 高保真交互原型
+   覆盖：AI 自习室 / 智慧教学 / 校园管理 / 家校互通 × 4 角色
+================================================================ */
+
+/* ---------------- 基础数据 ---------------- */
+const USERS = {
+  student:{name:'林小雨',avatar:'林',role:'学生端',cls:'高一(2)班'},
+  teacher:{name:'王明远',avatar:'王',role:'教师端',cls:'高一数学 · 高一(2)班班主任'},
+  parent:{name:'林女士',avatar:'林',role:'家长端',cls:'林小雨的母亲'},
+  admin:{name:'李建国',avatar:'李',role:'管理端',cls:'教务主任'}
+};
+const MENUS = {
+  admin:[['— 平台概况'],['dashboard','📊','数据看板'],['room-mgmt','🧘','AI 自习室管理'],
+         ['— 校园管理'],['attendance','🎫','统一考勤'],['schedule','🗓️','智能排课'],['notice','📢','通知公告'],['approval','✅','校务审批']],
+  student:[['— 我的学习'],['s-home','🎒','学习主页'],['s-booking','🧘','AI 自习室预约'],['s-ai','🤖','AI 智能答疑'],['s-wrong','📕','错题本'],['s-report','📈','学习报告']],
+  teacher:[['— 教学工作台'],['t-home','📐','教学看板'],['t-homework','📝','智能作业'],['t-wrong','🔎','错题聚合'],['t-monitor','🧘','自习室监测']],
+  parent:[['— 孩子的学情'],['p-home','🏠','今日概况'],['p-report','📈','学习周报'],
+          ['— 家校服务'],['p-pay','💳','在线缴费'],['p-msg','💬','家校消息'],['p-growth','🌱','成长档案'],['p-member','💎','答疑会员']]
+};
+const ROLE_HOME = {admin:'dashboard',student:'s-home',teacher:'t-home',parent:'p-home'};
+
+// 自习室座位（60 座 = 6 排 × 10 列）
+function genSeats(){
+  const seats=[];const taken=new Set();const block=new Set();
+  // 随机已约 + 智能排座间隔（同班间隔≥1空位演示：部分座位锁定）
+  while(taken.size<26){taken.add(Math.floor(Math.random()*60));}
+  [3,4,13,14,23,24,33,34,43,44,53,54].forEach(i=>block.add(i)); // 隔位锁座
+  for(let i=0;i<60;i++){
+    const row='ABCDEF'[Math.floor(i/10)],col=i%10+1;
+    seats.push({id:`${row}-${String(col).padStart(2,'0')}`,state:block.has(i)?'block':taken.has(i)?'taken':'free'});
+  }
+  return seats;
+}
+const state={role:'admin',page:'dashboard',seats:genSeats(),selSeat:null,selSlot:1,recurring:true,
+  booked:null,signed:false,askCount:3,chat:[],payDone:{},approveState:{},bookings:4};
+
+/* ---------------- SVG 图表工具 ---------------- */
+function lineChart(data,labels,w=560,h=190,color='#7C3AED',fill=true,unit=''){
+  const max=Math.max(...data)*1.25,min=0,pad={l:38,r:12,t:14,b:26};
+  const iw=w-pad.l-pad.r,ih=h-pad.t-pad.b;
+  const px=i=>pad.l+iw*(i/(data.length-1)),py=v=>pad.t+ih*(1-(v-min)/(max-min));
+  const pts=data.map((v,i)=>`${px(i)},${py(v)}`).join(' ');
+  const area=`${pad.l},${pad.t+ih} ${pts} ${pad.l+iw},${pad.t+ih}`;
+  let grid='',ylabels='';
+  for(let i=0;i<=4;i++){const v=min+(max-min)*i/4,y=py(v);
+    grid+=`<line x1="${pad.l}" y1="${y}" x2="${w-pad.r}" y2="${y}" stroke="#EEEFF6"/>`;
+    ylabels+=`<text x="${pad.l-6}" y="${y+4}" text-anchor="end" font-size="10" fill="#A6ABC0">${v>=10000?(v/10000)+'万':Math.round(v*10)/10}${unit}</text>`;}
+  const dots=data.map((v,i)=>`<circle cx="${px(i)}" cy="${py(v)}" r="3.5" fill="#fff" stroke="${color}" stroke-width="2"/>`).join('');
+  const xl=labels.map((l,i)=>`<text x="${px(i)}" y="${h-6}" text-anchor="middle" font-size="10.5" fill="#A6ABC0">${l}</text>`).join('');
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%">${grid}${ylabels}${fill?`<polygon points="${area}" fill="url(#lg1)" opacity=".18"/>`:''}
+  <defs><linearGradient id="lg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${color}"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>
+  <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round"/>${dots}${xl}</svg>`;
+}
+function barChart(data,labels,w=520,h=180,hlIdx=-1){
+  const max=Math.max(...data)*1.2,pad={l:30,r:8,t:12,b:24},iw=w-pad.l-pad.r,ih=h-pad.t-pad.b;
+  const bw=iw/data.length*0.52;
+  let bars='',grid='';
+  for(let i=0;i<=3;i++){const y=pad.t+ih*(1-i/3);grid+=`<line x1="${pad.l}" y1="${y}" x2="${w-pad.r}" y2="${y}" stroke="#EEEFF6"/><text x="${pad.l-5}" y="${y+4}" text-anchor="end" font-size="10" fill="#A6ABC0">${(max*i/3).toFixed(1)}</text>`;}
+  data.forEach((v,i)=>{const x=pad.l+iw*(i+0.5)/data.length-bw/2,y=pad.t+ih*(1-v/max);
+    bars+=`<rect x="${x}" y="${y}" width="${bw}" height="${ih*(v/max)}" rx="5" fill="${i===hlIdx?'url(#gb)':i===5||i===6?'#D9DDF0':'url(#gb)'}"/>`
+    +`<text x="${x+bw/2}" y="${y-5}" text-anchor="middle" font-size="10" fill="#7B81A0" font-weight="${i===hlIdx?700:400}">${v}</text>`;});
+  const xl=labels.map((l,i)=>`<text x="${pad.l+iw*(i+0.5)/data.length}" y="${h-6}" text-anchor="middle" font-size="10.5" fill="#A6ABC0">${l}</text>`).join('');
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%"><defs><linearGradient id="gb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8B5CF6"/><stop offset="1" stop-color="#2563EB"/></linearGradient></defs>${grid}${bars}${xl}</svg>`;
+}
+function radar(items,size=230,color='#7C3AED'){
+  const cx=size/2,cy=size/2+4,R=size/2-34,n=items.length;
+  const pt=(i,r)=>{const a=-Math.PI/2+i*2*Math.PI/n;return[(cx+r*Math.cos(a)).toFixed(1),(cy+r*Math.sin(a)).toFixed(1)]};
+  let rings='';[0.25,0.5,0.75,1].forEach(f=>{rings+=`<polygon points="${items.map((_,i)=>pt(i,R*f).join(',')).join(' ')}" fill="none" stroke="#E7E4F6"/>`});
+  let axes=items.map((_,i)=>`<line x1="${cx}" y1="${cy}" x2="${pt(i,R)[0]}" y2="${pt(i,R)[1]}" stroke="#E7E4F6"/>`).join('');
+  const poly=items.map((it,i)=>pt(i,R*it.v/100).join(',')).join(' ');
+  const lbls=items.map((it,i)=>{const[x,y]=pt(i,R+16);return`<text x="${x}" y="${+y+4}" text-anchor="middle" font-size="10.5" fill="#6B7280">${it.n} ${it.v}%</text>`}).join('');
+  return `<svg viewBox="0 0 ${size} ${size}" style="width:100%;max-width:${size}px;display:block;margin:0 auto">${rings}${axes}
+  <polygon points="${poly}" fill="${color}" opacity=".18" stroke="${color}" stroke-width="2"/>${lbls}</svg>`;
+}
+function donut(pct,color='#7C3AED',size=86,label=''){
+  const r=size/2-7,c=2*Math.PI*r;
+  return `<svg viewBox="0 0 ${size} ${size}" style="width:${size}px"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#EEF0F6" stroke-width="8"/>
+  <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${(c*pct/100).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${size/2} ${size/2})"/>
+  <text x="50%" y="50%" text-anchor="middle" dy="4" font-size="15" font-weight="700" fill="#1E2233">${pct}%</text></svg><div style="font-size:11px;color:#6B7280;text-align:center;margin-top:4px">${label}</div>`;
+}
+const prog=p=>`<div class="prog"><i style="width:${p}%"></i></div>`;
+const pct=v=>`<span style="font-variant-numeric:tabular-nums">${v}</span>`;
+
+/* ---------------- 页面模板 ---------------- */
+const PAGES={};
+
+/* ========== 管理端 ========== */
+PAGES.dashboard=()=>`
+<div class="page-head"><div><h2>数据看板</h2><div class="desc">明德中学 · 数据截至 2026-10-10 11:00 · 指标口径与 PRD 12 个月目标对齐</div></div>
+<button class="btn btn-pri" data-action="noop">📥 导出周报</button></div>
+<div class="grid g4" style="margin-bottom:16px">
+  <div class="stat"><div class="lb">签约合作学校</div><div class="v">12 <small style="font-size:14px;color:#6B7280">所</small></div><div class="sub up">↑ 本季度新增 3 所 · 目标 ≥10 ✓</div></div>
+  <div class="stat blue"><div class="lb">平台 MAU</div><div class="v">5.24 <small style="font-size:14px;color:#6B7280">万</small></div><div class="sub up">↑ 11.2% 环比 · 目标 ≥5万 ✓</div></div>
+  <div class="stat green"><div class="lb">今日自习人数</div><div class="v">1,847</div><div class="sub">晚自习在场峰值 1,203 人</div></div>
+  <div class="stat orange"><div class="lb">AI 答疑 · 今日</div><div class="v">3,251 <small style="font-size:14px;color:#6B7280">次</small></div><div class="sub">平均响应 2.1s · 目标 &lt;3s ✓</div></div>
+</div>
+<div class="grid g4" style="margin-bottom:16px">
+  <div class="stat"><div class="lb">学生周均自习时长</div><div class="v">4.6 <small style="font-size:14px;color:#6B7280">h</small></div><div class="sub up">目标 ≥4h ✓</div></div>
+  <div class="stat blue"><div class="lb">家长端周打开率</div><div class="v">68%</div><div class="sub up">目标 ≥60% ✓</div></div>
+  <div class="stat green"><div class="lb">校端客单价</div><div class="v">3.2 <small style="font-size:14px;color:#6B7280">万/年</small></div><div class="sub up">目标 ≥3万 ✓</div></div>
+  <div class="stat orange"><div class="lb">家长付费转化率</div><div class="v">18%</div><div class="sub up">目标 ≥15% ✓</div></div>
+</div>
+<div class="grid g2">
+  <div class="card"><h3>MAU 趋势（近 6 个月）<span class="tag badge b-purple">单位：万</span></h3>${lineChart([1.8,2.6,3.4,4.1,4.7,5.24],['5月','6月','7月','8月','9月','10月'],560,200)}</div>
+  <div class="card"><h3>今日晚自习 · 各年级专注均分</h3>
+    ${[['高一',81,100],['高二',84,100],['初三',79,100],['高二(4)班',88,100]].map(([n,v])=>`<div class="list-row"><span style="width:110px">${n}</span>${prog(v)}<b style="width:36px;text-align:right">${v}</b></div>`).join('')}
+    <div class="rule" style="margin-top:12px">💡 专注度数据基于桌位摄像头行为采集（抬头/低头/离座/交谈），仅存储 <b>7 天</b>，符合《个人信息保护法》要求。</div>
+  </div>
+</div>`;
+
+PAGES['room-mgmt']=()=>`
+<div class="page-head"><div><h2>AI 自习室管理</h2><div class="desc">空间管理 + 专注力监测 + 环境智能调节 · 3 间自习室实时状态</div></div><span class="badge b-green">● 实时</span></div>
+<div class="grid g3" style="margin-bottom:16px">
+  ${[['明德楼 A 区 · 高一',60,412,87,81],['明德楼 B 区 · 高二',48,286,72,84],['实验楼 C 区 · 初三',40,198,65,79]].map(([n,caps,today,rate,focus])=>`
+  <div class="card"><h3>${n}<span class="tag badge b-blue">${caps} 座</span></h3>
+    <div class="grid" style="grid-template-columns:repeat(3,1fr);text-align:center;margin-bottom:12px">
+      <div><div style="font-size:20px;font-weight:800">${today}</div><div style="font-size:11px;color:#6B7280">今日累计</div></div>
+      <div><div style="font-size:20px;font-weight:800;color:var(--primary)">${rate}%</div><div style="font-size:11px;color:#6B7280">预约率</div></div>
+      <div><div style="font-size:20px;font-weight:800;color:var(--blue)">${focus}</div><div style="font-size:11px;color:#6B7280">专注均分</div></div>
+    </div>${prog(rate)}
+    <div style="margin-top:12px;font-size:12px;color:#6B7280;display:flex;gap:14px"><span>💡 晚自习模式 · 灯光已调暗 20%</span><span>❄️ 24.5℃</span></div>
+  </div>`).join('')}
+</div>
+<div class="grid g2">
+  <div class="card"><h3>实时异常事件<span class="tag badge b-red">3 条待处理</span></h3>
+    <div class="evt"><span class="tm">20:14</span><span class="dot" style="background:var(--red)"></span><div><b>周子航</b>（高一3班 · A-23）连续离座 <b style="color:var(--red)">6 分 12 秒</b> → 已自动推送提醒<span class="badge b-red" style="margin-left:6px">离座>5min</span></div></div>
+    <div class="evt"><span class="tm">20:09</span><span class="dot" style="background:var(--orange)"></span><div><b>高一2班 A-11 / A-12</b> 交谈 <b style="color:#D97706">32 秒</b> → 已推送值班管理员<span class="badge b-orange" style="margin-left:6px">交谈>30s</span></div></div>
+    <div class="evt"><span class="tm">19:52</span><span class="dot" style="background:var(--orange)"></span><div><b>吴优</b>（初三1班 · C-08）频繁低头玩手机疑似行为 → 已记录待核实</div></div>
+    <div class="rule" style="margin-top:12px">📋 规则：连续离座 >5 分钟自动提醒 · 交谈超 30 秒记录并推送管理员 · 行为数据 7 天后自动清除</div>
+  </div>
+  <div class="card"><h3>今日预约 & 签到漏斗</h3>
+    ${[['预约提交','2,214',100],['按时到场签到','1,927',87],['完整时段完成','1,847',83],['生成学习日报','1,847',83]].map(([n,v,p])=>`<div class="list-row"><span style="width:120px">${n}</span>${prog(p)}<b style="width:64px;text-align:right">${v} 人</b></div>`).join('')}
+    <div class="rule" style="margin-top:10px">⏱️ 迟到 15 分钟自动释放座位（今日释放 23 个）；请假需提前 2 小时（今日准假 41 人）。</div>
+  </div>
+</div>`;
+
+PAGES.attendance=()=>`
+<div class="page-head"><div><h2>统一考勤</h2><div class="desc">进校 / 出校刷脸 · 数据实时同步班主任与家长端 · 识别耗时 0.6s</div></div><button class="btn btn-pri" data-action="noop">📣 催签异常</button></div>
+<div class="grid g4" style="margin-bottom:16px">
+  <div class="stat"><div class="lb">应到学生</div><div class="v">1,842</div></div>
+  <div class="stat green"><div class="lb">实到</div><div class="v">1,783</div><div class="sub up">出勤率 96.8%</div></div>
+  <div class="stat orange"><div class="lb">迟到</div><div class="v">36</div><div class="sub">自动短信通知家长</div></div>
+  <div class="stat blue"><div class="lb">未到（缺勤）</div><div class="v">23</div><div class="sub down">已同步班主任</div></div>
+</div>
+<div class="grid g2">
+  <div class="card"><h3>各班出勤率 TOP / BOTTOM</h3>
+    ${[['高一(1)班',99.2],['高一(2)班',98.7],['初三(1)班',97.5],['高二(3)班',95.1],['高二(5)班',93.4]].map(([n,v])=>`<div class="list-row"><span style="width:100px">${n}</span>${prog(v)}<b style="width:56px;text-align:right">${v}%</b></div>`).join('')}
+  </div>
+  <div class="card"><h3>今早刷脸进校记录（实时流）</h3>
+    <div class="evt"><span class="tm">07:32</span><span class="dot" style="background:var(--green)"></span>林小雨 · 高一(2)班 · 东门闸机 02 · 识别 0.5s</div>
+    <div class="evt"><span class="tm">07:31</span><span class="dot" style="background:var(--green)"></span>陈嘉树 · 高一(1)班 · 东门闸机 01 · 识别 0.7s</div>
+    <div class="evt"><span class="tm">07:29</span><span class="dot" style="background:var(--orange)"></span>周子航 · 高一(3)班 · 南门闸机 01 · <b style="color:#D97706">迟到 29 分钟</b></div>
+    <div class="evt"><span class="tm">07:26</span><span class="dot" style="background:var(--green)"></span>吴优 · 初三(1)班 · 东门闸机 02 · 识别 0.6s</div>
+    <div class="rule" style="margin-top:10px">🔐 学生人脸原图本地化存储于校服务器，云端仅存特征向量。</div>
+  </div>
+</div>`;
+
+PAGES.schedule=()=>`
+<div class="page-head"><div><h2>智能排课</h2><div class="desc">按教师可用时间 / 教室资源 / 班级课表自动排课 · 冲突自动检测</div></div>
+<div style="display:flex;gap:10px"><button class="btn btn-ghost" data-action="noop">📖 导出课表</button><button class="btn btn-pri" data-action="auto-schedule">⚡ 一键自动排课</button></div></div>
+<div class="card" style="margin-bottom:16px;border-left:3px solid var(--red)"><h3 style="margin-bottom:6px;color:var(--red)">⚠ 检测到 1 处冲突</h3><div style="font-size:13px">周三 · 第 3 节：<b>高一(2)班 物理（A303 实验室）</b> 与 <b>高一(4)班 化学（A303 实验室）</b> 教室冲突 → 点击「一键自动排课」由系统调整</div></div>
+<div class="card"><h3>高一(2)班 · 本周课表</h3>
+<table class="tt"><tr><th></th><th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th></tr>
+<tr><th>第1节</th><td class="c1">语文</td><td class="c2">数学</td><td class="c1">语文</td><td class="c3">英语</td><td class="c2">数学</td></tr>
+<tr><th>第2节</th><td class="c2">数学</td><td class="c3">英语</td><td class="c2">数学</td><td class="c1">语文</td><td class="c4">物理</td></tr>
+<tr><th>第3节</th><td class="c3">英语</td><td class="c4">物理</td><td class="c5 conflict">物理⚠<br><small>实验室冲突</small></td><td class="c2">数学</td><td class="c1">语文</td></tr>
+<tr><th>第4节</th><td class="c4">物理</td><td class="c1">语文</td><td class="c3">英语</td><td class="c5">化学</td><td class="c3">英语</td></tr>
+<tr><th>第5节</th><td class="c5">化学</td><td class="c6" style="background:#F1F2F7">体育</td><td class="c2">数学</td><td class="c4">物理</td><td class="c5">化学</td></tr>
+<tr><th>晚自习</th><td class="c1" style="background:var(--primary-soft)">AI 自习室 A 区</td><td class="c1" style="background:var(--primary-soft)">AI 自习室 A 区</td><td class="c1" style="background:var(--primary-soft)">AI 自习室 B 区</td><td class="c1" style="background:var(--primary-soft)">AI 自习室 A 区</td><td>—</td></tr></table></div>`;
+
+PAGES.notice=()=>`
+<div class="page-head"><div><h2>通知公告</h2><div class="desc">校情 / 班级 / 紧急三级分级推送 · 已读未读实时统计</div></div></div>
+<div class="grid g2">
+<div class="card"><h3>📤 发送新通知</h3>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <input id="n-title" placeholder="通知标题，如：关于国庆后调课的通知" style="padding:11px 14px;border:1px solid var(--line);border-radius:10px;font-size:13.5px">
+    <textarea id="n-body" rows="3" placeholder="通知内容…" style="padding:11px 14px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;font-family:inherit;resize:vertical"></textarea>
+    <div style="display:flex;gap:10px;align-items:center">
+      <select id="n-level" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px"><option>📢 普通（校情）</option><option>❗ 重要（班级）</option><option>🚨 紧急（全员强提醒）</option></select>
+      <select style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px"><option>全校</option><option>高一(2)班</option><option>高三</option></select>
+      <button class="btn btn-pri" data-action="send-notice" style="margin-left:auto">发送</button>
+    </div>
+  </div>
+  <div id="n-list" style="margin-top:16px"></div>
+</div>
+<div class="card"><h3>📨 近期通知与已读统计</h3><div id="notice-list"></div></div>
+</div>`;
+
+const NOTICES=[
+ {t:'关于期中考试周 AI 自习室切换「安静模式」的通知',lv:'重要',read:92,time:'10-09 14:20',scope:'全校'},
+ {t:'10 月餐费缴纳提醒（截止 10-15）',lv:'普通',read:86,time:'10-08 10:00',scope:'全校'},
+ {t:'高一(2)班物理晚辅导调至周四',lv:'重要',read:97,time:'10-07 17:30',scope:'高一(2)班'},
+ {t:'台风预警：今晚晚自习提前至 18:00 结束',lv:'紧急',read:100,time:'09-28 15:00',scope:'全校'}];
+function renderNotices(){
+  document.getElementById('notice-list').innerHTML=NOTICES.map(n=>{
+    const c={ '紧急':'b-red','重要':'b-orange','普通':'b-gray' }[n.lv];
+    return `<div class="list-row"><span class="badge ${c}" style="flex-shrink:0">${n.lv}</span><div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n.t}</div><div style="font-size:11.5px;color:#9AA0B4;margin-top:3px">${n.time} · ${n.scope}</div></div><div style="width:90px">${prog(n.read)}<div style="font-size:11px;color:#6B7280;text-align:right;margin-top:3px">已读 ${n.read}%</div></div></div>`;}).join('');
+}
+
+PAGES.approval=()=>`
+<div class="page-head"><div><h2>校务审批</h2><div class="desc">请假 / 报修 / 采购线上审批流 · 替代纸质单据 · 本月平均办结 3.2h</div></div><div class="tabs"><button class="on">待办 4</button><button data-action="noop">已办 27</button></div></div>
+<div class="grid g2" id="ap-list">
+${[['.leave1','🎫','学生请假','周子航 · 高一(3)班','10-11 至 10-12 · 事假（家中有事）','b-blue'],
+   ['.fix1','🔧','设备报修','A303 实验室','投影仪 HDMI 接口松动，影响周三课程','b-orange'],
+   ['.buy1','🛒','物品采购','物理教研组','高三分层练习册 300 册 · 预算 ¥4,500','b-purple'],
+   ['.leave2','🎫','学生请假','吴优 · 初三(1)班','10-14 下午 · 病假（附医院证明）','b-blue']]
+ .map(([id,ico,type,who,desc,c])=>`<div class="card" style="display:flex;gap:14px;align-items:flex-start">
+   <div style="width:42px;height:42px;border-radius:12px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${ico}</div>
+   <div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px"><b>${type}</b><span class="badge ${c}">待审批</span></div>
+   <div style="font-size:13px;margin:6px 0 4px">${who}</div><div style="font-size:12.5px;color:#6B7280;line-height:1.6">${desc}</div>
+   <div style="margin-top:12px;display:flex;gap:8px" id="btns-${id}">
+     <button class="btn btn-pri btn-sm" data-action="ap-ok" data-id="${id}">✓ 同意</button>
+     <button class="btn btn-ghost btn-sm" data-action="ap-no" data-id="${id}">✕ 驳回</button>
+   </div></div></div>`).join('')}
+</div>`;
+
+/* ========== 学生端 ========== */
+PAGES['s-home']=()=>`
+<div class="page-head"><div><h2>你好，林小雨 👋</h2><div class="desc">高一(2)班 · 本周自习预约 4/6 个时段 · 连续专注打卡 11 天</div></div><span class="badge b-purple">🔥 自习之星 · Top 5%</span></div>
+<div class="grid g4" style="margin-bottom:16px">
+  <div class="stat"><div class="lb">今日专注分</div><div class="v">87</div><div class="sub up">高于班级均分 78 ✓</div></div>
+  <div class="stat blue"><div class="lb">今日专注时长</div><div class="v">1h42m</div><div class="sub">离座 1 次 · 已提醒</div></div>
+  <div class="stat green"><div class="lb">今日作业</div><div class="v">3/4</div><div class="sub">待完成：英语听写</div></div>
+  <div class="stat orange"><div class="lb">AI 答疑额度</div><div class="v">${5-state.askCount}<small style="font-size:14px;color:#6B7280">/5 免费</small></div><div class="sub">超出部分走家长会员</div></div>
+</div>
+<div class="grid g2">
+  <div class="card"><h3>📌 今日任务</h3>
+    ${[['数学 · 函数与导数练习（第4章）','AI 已自动批改 · 2 题待订正','b-green','✓ 已完成'],['物理 · 预习：牛顿第二定律','明天 08:00 截止','b-orange','⏳ 进行中'],['英语 · Unit3 单词听写','今晚 21:00 前','b-orange','⏳ 待完成'],['错题订正 · 数列专题 2 题','来自错题本推荐','b-purple','📋 已推送']]
+    .map(([a,b,c,d])=>`<div class="list-row"><div style="flex:1"><div style="font-weight:500">${a}</div><div style="font-size:12px;color:#6B7280;margin-top:3px">${b}</div></div><span class="badge ${c}">${d}</span></div>`).join('')}
+    <button class="btn btn-pri" style="width:100%;justify-content:center;margin-top:14px" data-action="nav" data-page="s-booking">🧘 预约今晚 AI 自习室</button>
+  </div>
+  <div class="card"><h3>🧘 我的自习预约</h3><div id="my-booking">
+    ${state.booked?`<div style="border:1.5px solid var(--primary);border-radius:12px;padding:14px;background:var(--primary-soft)">
+      <div style="display:flex;justify-content:space-between;align-items:center"><b>今晚 ${state.selSlot===1?'18:30–20:00':'20:10–21:40'} · 明德楼 A 区 · ${state.booked}</b><span class="badge b-purple">已预约</span></div>
+      <div style="font-size:12px;color:#6B7280;margin:8px 0">每周重复${state.recurring?' · 已开启':''} · 迟到 15 分钟自动释放</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-pri btn-sm" data-action="face-checkin">${state.signed?'✓ 已人脸签到':'📷 模拟人脸签到'}</button>
+        <button class="btn btn-ghost btn-sm" data-action="cancel-booking">取消预约</button></div>
+      ${state.signed?`<div style="margin-top:10px;font-size:12px;color:#059669">✓ 签到成功 20:10 · 已实时同步家长端 · 桌位摄像头专注监测已开启</div>`:''}
+    </div>`:`<div style="text-align:center;padding:26px 0;color:#9AA0B4">今晚暂无预约<br><span style="font-size:12px">去「AI 自习室预约」锁定你的专属座位 →</span></div>`}
+  </div>
+  <div style="margin-top:16px"><h3 style="font-size:14px;margin-bottom:10px;color:#4B5163">环境状态 · 明德楼 A 区</h3>
+  <div class="grid g3"><div class="stat" style="padding:12px"><div class="lb">灯光</div><div class="v" style="font-size:17px">晚自习模式 🌙</div></div>
+  <div class="stat" style="padding:12px"><div class="lb">空调</div><div class="v" style="font-size:17px">24.5℃</div></div>
+  <div class="stat" style="padding:12px"><div class="lb">新风</div><div class="v" style="font-size:17px">CO₂ 618ppm</div></div></div></div>
+  </div>
+</div>`;
+
+PAGES['s-booking']=()=>`
+<div class="page-head"><div><h2>AI 自习室 · 预约选座</h2><div class="desc">明德楼 A 区 · 今晚时段 · 支持按周循环预约</div></div>
+<span class="badge ${state.bookings>=6?'b-red':'b-blue'}">本周已约 ${state.bookings}/6 个时段</span></div>
+<div class="grid g2" style="grid-template-columns:1.6fr 1fr">
+<div class="card">
+  <h3>🕐 选择时段</h3>
+  <div style="display:flex;gap:10px;margin-bottom:16px">
+    ${[['1','18:30 – 20:00','剩余 8 座'],['2','20:10 – 21:40','剩余 15 座']].map(([id,t,left])=>`<button data-action="pick-slot" data-id="${id}" style="flex:1;padding:12px;border-radius:12px;border:1.5px solid ${state.selSlot==id?'var(--primary)':'var(--line)'};background:${state.selSlot==id?'var(--primary-soft)':'#fff'};text-align:left"><b style="display:block;font-size:14px">${t}</b><span style="font-size:12px;color:${state.selSlot==id?'var(--primary)':'#6B7280'}">${left}</span></button>`).join('')}
+  </div>
+  <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#4B5163;margin-bottom:14px;cursor:pointer">
+    <input type="checkbox" ${state.recurring?'checked':''} data-action="toggle-recurring"> 每周同时段循环预约（recurring）
+  </label>
+  <h3>💺 选择座位（点击可选）</h3>
+  <div class="seat-grid"><div class="podium">— 讲 台 / 监护摄像头 —</div>
+    ${state.seats.map((s,i)=>`<div class="seat ${s.state}${state.selSeat===i?' sel':''}" ${s.state==='free'?`data-action="pick-seat" data-i="${i}"`:''}>${s.id}</div>`).join('')}
+  </div>
+  <div style="display:flex;gap:16px;margin-top:14px;font-size:12px;color:#6B7280">
+    <span><i class="dot" style="background:#fff;border:1.5px solid #E3E5F0;display:inline-block"></i> 可选</span>
+    <span><i class="dot" style="background:#EEF0F6;display:inline-block"></i> 已约</span>
+    <span><i class="dot" style="background:repeating-linear-gradient(45deg,#F6F7FB,#F6F7FB 3px,#EDEFF6 3px,#EDEFF6 6px);display:inline-block"></i> 智能排座间隔（同班≥1空位）</span>
+    <span><i class="dot" style="background:var(--grad);display:inline-block"></i> 当前选中</span>
+  </div>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+  <div class="card"><h3>📋 预约确认</h3>
+    <div style="font-size:13px;line-height:2.2">
+      <div>自习室：<b>明德楼 A 区（高一）</b></div>
+      <div>时段：<b>${state.selSlot==1?'今晚 18:30 – 20:00':'今晚 20:10 – 21:40'}</b></div>
+      <div>座位：<b id="cf-seat">${state.selSeat!==null?state.seats[state.selSeat].id:'未选择'}</b></div>
+      <div>循环：<b>${state.recurring?'每周重复':'仅本周'}</b></div>
+    </div>
+    <button class="btn btn-pri" style="width:100%;justify-content:center;margin-top:12px" data-action="confirm-booking" ${state.selSeat===null?'disabled style="opacity:.5;width:100%;justify-content:center;margin-top:12px"':''}>确认预约</button>
+  </div>
+  <div class="card"><h3>📐 预约规则</h3>
+    <div class="rule" style="margin-bottom:10px">⏰ 迟到 15 分钟自动释放座位</div>
+    <div class="rule" style="margin-bottom:10px">🗓️ 每周最多预约 6 个时段（本周已用 ${state.bookings}）</div>
+    <div class="rule" style="margin-bottom:10px">📝 请假需提前 2 小时，否则计入违约</div>
+    <div class="rule">🤖 也可使用「智能排座」：按年级、科目、学习目标自动分配，避免同桌交谈</div>
+  </div>
+</div></div>`;
+
+PAGES['s-ai']=()=>`
+<div class="page-head"><div><h2>AI 智能答疑</h2><div class="desc">拍照上传题目 · 分步思路引导（不给直接答案）· 支持 K12 全学科</div></div>
+<span class="badge ${state.askCount>=5?'b-red':'b-purple'}">今日免费额度 ${state.askCount}/5</span></div>
+<div class="grid" style="grid-template-columns:250px 1fr">
+<div class="card" style="align-self:start"><h3>💬 会话</h3>
+  ${[['数列求通项','昨天'],['英语非谓语填空','10-08'],['物理斜面受力','10-06']].map(([t,d])=>`<div class="list-row" style="cursor:pointer"><div style="flex:1"><div style="font-size:13px;font-weight:500">${t}</div><div style="font-size:11px;color:#9AA0B4">${d}</div></div></div>`).join('')}
+  <div class="rule" style="margin-top:10px">💎 每日免费 5 题；会员解锁无限次答疑 + 错题精讲</div>
+</div>
+<div class="card"><div class="chat-box" id="chat">
+  <div class="msg"><div class="mv" style="background:var(--grad)">🤖</div><div class="bubble">你好，我是十二学 AI 答疑助手。拍照或选择一道题，我会给你<b>分步思路引导</b>——答案是留给你自己写出来的 😊</div></div>
+  ${state.chat.join('')}
+</div>
+<div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+  <button class="btn btn-ghost" data-action="ask" data-q="math">📷 数学：求 f(x)=x³−3x 的单调区间</button>
+  <button class="btn btn-ghost" data-action="ask" data-q="eng">📷 英语：非谓语动词填空</button>
+  <button class="btn btn-ghost" data-action="ask" data-q="phy">📷 物理：斜面上的牛顿第二定律</button>
+  <button class="btn btn-pri" style="margin-left:auto" data-action="ask" data-q="math">📤 上传题目图片</button>
+</div></div></div>`;
+
+const AI_ANSWERS={
+ math:{title:'📸 已识别：数学 · 导数应用题（高一）',steps:[
+  ['Step 1 · 观察结构','求单调区间，需要对 f(x) 求<b>导数</b>并研究 f′(x) 的符号。想一想：三次多项式的导数是什么次数？'],
+  ['Step 2 · 动手求导','对 f(x)=x³−3x 逐项求导：x³ 的导数是 3x²，−3x 的导数是 −3。f′(x)=？'],
+  ['Step 3 · 解不等式','令 f′(x)>0 得增区间，f′(x)<0 得减区间。这是一个二次不等式，先求它的两个根 x=±1，再画草图判断开口方向上的正负区间。'],
+  ['你来试试','把 f′(x)=3x²−3 的解集写出来，就是答案。写完可以拍照让我核对思路 ✅'],
+  ['📌 同类题推荐','① 求 g(x)=x³−12x 的单调区间　② 已知 h(x) 在 (0,+∞) 单调递增，求参数 a 范围']]},
+ eng:{title:'📸 已识别：英语 · 非谓语动词（高一）',steps:[
+  ['Step 1 · 找主干','先找出句子的<b>谓语动词</b>——一个句子只能有一个谓语，多出来的动词就要考虑非谓语形式（to do / doing / done）。'],
+  ['Step 2 · 判断逻辑主语','非谓语动作的执行者是谁？如果与主语是<b>主动</b>关系用 doing，<b>被动</b>关系用 done，表<b>目的</b>用 to do。'],
+  ['Step 3 · 代入验证','把你选的形式放回句子里读一遍：语义和语法都通顺吗？'],
+  ['你来试试','「____ (finish) his homework, the boy went out to play.」——finish 的动作发生在 go out 之前，且 boy 与 finish 是主动关系，该用哪种形式？提示：完成态 + 主动 → having done'],
+  ['📌 同类题推荐','① 「The ____ (lose) boy was found in the park.」② 「He hurried to the station, only ____ (find) the train gone.」']]},
+ phy:{title:'📸 已识别：物理 · 牛顿第二定律（高一）',steps:[
+  ['Step 1 · 明确对象','先确定<b>研究对象</b>（滑块），把斜面方向设为 x 轴、垂直斜面为 y 轴建立坐标系。'],
+  ['Step 2 · 受力分析','画受力图：重力 mg、支持力 N、摩擦力 f。把重力沿斜面方向分解：mg·sinθ，垂直斜面方向：mg·cosθ。这一步是所有斜面问题的核心。'],
+  ['Step 3 · 列方程','沿斜面方向：mg·sinθ − f = ma；垂直斜面方向：N = mg·cosθ，而 f = μN。联立即可解出 a。'],
+  ['你来试试','若 θ=30°、μ=√3/6，代入算一算 a 是多少？算完拍照核对 ✅'],
+  ['📌 同类题推荐','① 斜面上物体匀速下滑，求 μ 与 θ 关系　② 传送带模型中的加速度分析']]}};
+function aiBubble(key){
+  const a=AI_ANSWERS[key];
+  return `<div class="msg me"><div class="mv" style="background:#2563EB">林</div><div class="bubble">${a.title}</div></div>
+  <div class="msg"><div class="mv" style="background:var(--grad)">🤖</div><div class="bubble">${a.steps.map(s=>`<div class="ai-step"><b>${s[0]}</b><br>${s[1]}</div>`).join('')}</div></div>`;
+}
+
+PAGES['s-wrong']=()=>`
+<div class="page-head"><div><h2>错题本</h2><div class="desc">按学科 / 章节 / 难度自动聚合 · 生成个人薄弱知识点图谱 · 共 23 题</div></div><button class="btn btn-pri" data-action="noop">🔄 生成订正练习</button></div>
+<div class="grid g2" style="grid-template-columns:1fr 1.2fr">
+<div class="card"><h3>🕸 薄弱知识点图谱 · 数学</h3>${radar([{n:'函数与导数',v:62},{n:'数列',v:71},{n:'立体几何',v:88},{n:'概率统计',v:83},{n:'三角函数',v:76}])}
+<div class="rule" style="margin-top:8px">雷达越“瘦”的知识点越薄弱 → AI 已按此为你推送同难度同类题，避免无效重复刷题</div></div>
+<div class="card"><h3>📕 错题列表<span class="tag badge b-red">待订正 5</span></h3>
+<table><tr><th>学科</th><th>题目</th><th>来源</th><th>状态</th></tr>
+${[['数学','f(x)=x³−3x 单调区间','今晚作业','<span class="badge b-red">待订正</span>'],['数学','等比数列前 n 项和','10-08 作业','<span class="badge b-orange">订正中</span>'],['英语','非谓语动词填空','10-08 作业','<span class="badge b-orange">订正中</span>'],['物理','斜面牛顿第二定律','AI 答疑','<span class="badge b-red">待订正</span>'],['数学','含参函数恒成立问题','周测 · 10-05','<span class="badge b-green">已掌握</span>'],['化学','氧化还原配平','周测 · 10-05','<span class="badge b-green">已掌握</span>']]
+.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table></div></div>`;
+
+PAGES['s-report']=()=>`
+<div class="page-head"><div><h2>学习报告</h2><div class="desc">每次自习结束自动生成 · 日报当日推送 · 周报每周日晚汇总 · 同步家长端</div></div>
+<div class="tabs"><button class="on" data-action="rtab" data-t="day">今日日报</button><button data-action="rtab" data-t="week">本周周报</button></div></div>
+<div id="report-day" class="grid g2">
+  <div class="card"><h3>📉 今日效率曲线（18:30–20:00）</h3>${lineChart([62,78,85,88,84,90,86,74],['18:30','18:45','19:00','19:15','19:30','19:45','20:00','20:15'],560,180,'#2563EB',false)}
+  <div style="display:flex;gap:20px;font-size:12px;color:#6B7280;margin-top:4px"><span>🟣 专注时段 1h42m</span><span>⚠️ 19:52 离座 6 分钟（已提醒）</span></div></div>
+  <div class="card"><h3>🧘 今日自习概览</h3>
+    <div class="grid g3" style="margin-bottom:14px"><div class="stat" style="padding:12px"><div class="lb">专注分</div><div class="v">87</div></div><div class="stat blue" style="padding:12px"><div class="lb">答疑</div><div class="v">3 题</div></div><div class="stat green" style="padding:12px"><div class="lb">错题归档</div><div class="v">2 题</div></div></div>
+    <div style="font-size:13px;line-height:2">✓ 完成数学作业 22 题（正确率 91%）<br>✓ 英语单词听写 30/32<br>📌 19:52 连续离座 >5 分钟，系统已自动提醒</div>
+  </div>
+</div>
+<div id="report-week" class="grid g2 hidden">
+  <div class="card"><h3>📊 本周专注时长（h）· 合计 12.1h</h3>${barChart([2.5,1.8,3.2,2.6,0,2.0,0],['周一','周二','周三','周四','周五','周六','周日'],520,180,2)}</div>
+  <div class="card"><h3>🎯 与班级平均水平对比</h3>
+    ${[['专注时长',86,72],['作业正确率',91,83],['答疑主动度',78,65],['错题订正率',95,80]].map(([n,me,avg])=>`<div class="list-row"><span style="width:96px">${n}</span><div style="flex:1">${prog(me)}<div style="display:flex;height:6px;margin-top:3px"><i style="width:${avg}%;background:#D9DDF0;border-radius:99px"></i></div></div><b style="width:80px;text-align:right">${me}<small style="color:#9AA0B4;font-weight:400"> / 班均${avg}</small></b></div>`).join('')}
+    <div class="rule" style="margin-top:10px">🟣 紫色 = 你 · 灰色 = 班级平均 · 报告每周日 21:00 推送家长端</div>
+  </div>
+</div>`;
+
+/* ========== 教师端 ========== */
+PAGES['t-home']=()=>`
+<div class="page-head"><div><h2>教学看板</h2><div class="desc">王明远 · 高一数学 / 高一(2)班班主任 · 数据实时同步自 AI 自习室</div></div><button class="btn btn-pri" data-action="nav" data-page="t-homework">📝 布置新作业</button></div>
+<div class="grid g4" style="margin-bottom:16px">
+  <div class="stat orange"><div class="lb">待批改（主观题）</div><div class="v">18</div><div class="sub">AI 已批 142 份客观题</div></div>
+  <div class="stat"><div class="lb">本周已布置作业</div><div class="v">5</div><div class="sub">覆盖 2 个教学班</div></div>
+  <div class="stat blue"><div class="lb">班级平均专注分</div><div class="v">78</div><div class="sub up">↑ 较上周 +3</div></div>
+  <div class="stat green"><div class="lb">作业按时提交率</div><div class="v">92%</div><div class="sub">3 名学生需提醒</div></div>
+</div>
+<div class="grid g2">
+  <div class="card"><h3>🔥 班级高频错题知识点 TOP5</h3>
+    ${[['函数与导数',34],['数列',27],['三角函数',19],['立体几何',12],['概率统计',8]].map(([n,v])=>`<div class="list-row"><span style="width:100px">${n}</span>${prog(v*2.5)}<b style="width:56px;text-align:right;color:${v>25?'var(--red)':'inherit'}">${v}%</b></div>`).join('')}
+    <div class="rule" style="margin-top:10px">💡 错题率 >25% 的知识点建议本周课堂上重点讲评</div></div>
+  <div class="card"><h3>⚠️ 需要关注的学生</h3>
+    <table><tr><th>学生</th><th>信号</th><th>建议动作</th></tr>
+    ${[['周子航','连续 2 天离座 >5min','晚自习值班面谈'],['刘一诺','作业正确率 3 连降','推送基础同类题'],['陈嘉树','自习预约率降至 33%','联系家长了解情况']].map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table>
+    <div class="rule" style="margin-top:12px">📊 学情信号来自：作业数据 + 自习室专注度 + 错题本聚合</div></div>
+</div>`;
+
+PAGES['t-homework']=()=>`
+<div class="page-head"><div><h2>智能作业</h2><div class="desc">布置 → 线上提交 → AI 批改客观题 → 教师批量批阅主观题 → 错题自动归档</div></div><button class="btn btn-pri" data-action="hw-modal">＋ 布置作业</button></div>
+<div class="card"><h3>作业列表 · 高一(2)班</h3>
+<table><tr><th>作业</th><th>题量</th><th>截止</th><th>提交</th><th>AI 批改</th><th>我的批阅</th><th>操作</th></tr>
+${[['函数与导数练习（第4章）',22,'10-09 21:00',96,'<span class="badge b-green">✓ 客观题已批 100%</span>','<span class="badge b-orange">主观题待批 18</span>','<button class="btn btn-ghost btn-sm" data-action="noop">批量批阅</button>'],
+   ['英语 Unit3 听写',1,'10-10 21:00',88,'<span class="badge b-green">✓ 自动评分</span>','—','<button class="btn btn-ghost btn-sm" data-action="noop">查看</button>'],
+   ['物理 · 牛顿定律预习单',8,'10-11 08:00',74,'<span class="badge b-blue">进行中 62%</span>','—','<button class="btn btn-ghost btn-sm" data-action="noop">催交</button>'],
+   ['数列专题卷',18,'10-06 21:00',100,'<span class="badge b-green">✓ 已全部批改</span>','<span class="badge b-green">✓ 已完成</span>','<button class="btn btn-ghost btn-sm" data-action="noop">查看报告</button>']]
+ .map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table>
+<div class="rule" style="margin-top:14px">🔁 批阅完成后，错题将<b>自动归入每个学生的错题本</b>，并按知识点标签聚合，用于个性化练习推送。</div></div>`;
+
+PAGES['t-wrong']=()=>`
+<div class="page-head"><div><h2>错题聚合</h2><div class="desc">按学科 / 章节 / 难度标签聚合全班错题 · 一键推送针对性练习</div></div></div>
+<div class="grid g2">
+<div class="card"><h3>📚 按知识点 · 错误率分布</h3>
+${[['函数与导数 · 含参讨论',34,'b-red'],['数列 · 递推求通项',27,'b-red'],['三角函数 · 图像变换',19,'b-orange'],['立体几何 · 建系求角',12,'b-blue'],['概率统计 · 分布列',8,'b-gray']].map(([n,v,c])=>`<div class="list-row"><div style="flex:1"><div style="font-size:13px;font-weight:500">${n}</div>${prog(v*2.5)}</div><span class="badge ${c}" style="width:52px;justify-content:center">${v}%</span><button class="btn btn-ghost btn-sm" data-action="push-practice" data-n="${n}">推送练习</button></div>`).join('')}</div>
+<div class="card"><h3>🎯 已推送练习效果追踪</h3>
+<table><tr><th>推送练习</th><th>覆盖</th><th>已完成</th><th>二次正确率</th></tr>
+${[['数列同类题 8 道','42 人','38 人 (90%)','76% ↑21pt'],['导数基础巩固 6 道','42 人','41 人 (98%)','81% ↑18pt'],['三角恒等变换 5 道','42 人','29 人 (69%)','71% ↑14pt']].map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table>
+<div class="rule" style="margin-top:12px">📈 练习基于错题 + 自习室答题数据生成同难度同类题，避免无效重复刷题。</div></div></div>`;
+
+PAGES['t-monitor']=()=>`
+<div class="page-head"><div><h2>自习室监测 · 我的学生</h2><div class="desc">明德楼 A 区 · 今晚 20:10–21:40 · 摄像头行为采集实时计算专注分</div></div><span class="badge b-green">● 实时在线 34/42 人</span></div>
+<div class="grid g2" style="grid-template-columns:1.4fr 1fr">
+<div class="card"><h3>💺 座位专注度（部分）</h3>
+<table><tr><th>学生</th><th>座位</th><th>专注分</th><th>状态</th><th>今日专注</th></tr>
+${[['林小雨','A-07',87,'<span class="badge b-green">专注中</span>','1h42m'],['陈嘉树','A-12',64,'<span class="badge b-orange">交谈 32s 已记录</span>','0h58m'],['刘一诺','A-15',91,'<span class="badge b-green">专注中</span>','1h51m'],['周子航','A-23',42,'<span class="badge b-red">离座 6min</span>','0h31m'],['吴思远','A-31',83,'<span class="badge b-green">专注中</span>','1h36m'],['高子墨','A-34',77,'<span class="badge b-blue">低头写字</span>','1h20m']].map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table></div>
+<div class="card"><h3>🔔 实时事件</h3>
+  <div class="evt"><span class="tm">20:14</span><span class="dot" style="background:var(--red)"></span><div>周子航 连续离座 6 分 12 秒 → 已自动推送提醒，建议课后面谈</div></div>
+  <div class="evt"><span class="tm">20:09</span><span class="dot" style="background:var(--orange)"></span><div>陈嘉树（A-12）与邻座交谈 32 秒 → 已记录并推送管理员</div></div>
+  <div class="evt"><span class="tm">19:47</span><span class="dot" style="background:var(--green)"></span><div>林小雨 连续专注 42 分钟，效率曲线上升 🎉</div></div>
+  <div class="rule" style="margin-top:12px">🔐 行为数据仅存储 <b>7 天</b>，仅用于学情反馈，不对学生公开排名。</div></div>
+</div>`;
+
+/* ========== 家长端 ========== */
+PAGES['p-home']=()=>`
+<div class="page-head"><div><h2>林小雨的今日概况</h2><div class="desc">高一(2)班 · 数据来自 AI 自习室与智慧教学模块 · 每日 21:30 推送日报</div></div><span class="badge b-green">✓ 今日已人脸签到 07:32</span></div>
+<div class="grid g4" style="margin-bottom:16px">
+  <div class="stat"><div class="lb">今日专注时长</div><div class="v">1h42m</div><div class="sub up">本周累计 12.1h</div></div>
+  <div class="stat blue"><div class="lb">专注分</div><div class="v">87</div><div class="sub">班级平均 78</div></div>
+  <div class="stat green"><div class="lb">今日作业</div><div class="v">3/4</div><div class="sub">正确率 91%</div></div>
+  <div class="stat orange"><div class="lb">AI 答疑使用</div><div class="v">3 题</div><div class="sub">今日免费额度剩余 2</div></div>
+</div>
+<div class="grid g2">
+  <div class="card"><h3>📰 今日学习日报 · AI 生成</h3>
+    <div style="font-size:13.5px;line-height:2.1">
+      📉 <b>效率曲线</b>：19:00–19:45 为高效期，19:52 离座 6 分钟（系统已提醒）<br>
+      ✅ <b>数学作业</b>：22 题正确 20 题，错题已归档至「函数与导数」<br>
+      🤖 <b>AI 答疑</b>：3 题均为导数应用，思路引导模式（未直接给答案）<br>
+      🏆 <b>亮点</b>：连续专注打卡 11 天，超过班级 92% 的同学
+    </div>
+    <button class="btn btn-ghost" style="margin-top:12px" data-action="nav" data-page="p-report">查看完整周报 →</button></div>
+  <div class="card"><h3>💬 班主任留言</h3>
+    <div class="msg"><div class="mv" style="background:#10B981">张</div><div class="bubble">林妈妈，小雨最近自习状态很好，专注分稳定在 85+。数学导数部分稍弱，我已给她推送一组基础同类题，麻烦周末督促完成 ✅<div style="font-size:11px;color:#9AA0B4;margin-top:6px">今天 10:24</div></div></div>
+    <button class="btn btn-pri" style="margin-top:14px" data-action="nav" data-page="p-msg">回复消息 →</button></div>
+</div>`;
+
+PAGES['p-report']=()=>`
+<div class="page-head"><div><h2>学习周报</h2><div class="desc">每周日 21:00 自动汇总 · 支持与班级平均横向对比</div></div><span class="badge b-purple">第 6 周（10-04 ~ 10-10）</span></div>
+<div class="grid g2">
+  <div class="card"><h3>📊 本周专注时长（h）· 合计 12.1h</h3>${barChart([2.5,1.8,3.2,2.6,0,2.0,0],['周一','周二','周三','周四','周五','周六','周日'],520,180,2)}</div>
+  <div class="card"><h3>🎯 能力对比（林小雨 vs 班级平均）</h3>
+    ${[['专注时长',86,72],['作业正确率',91,83],['答疑主动度',78,65],['错题订正率',95,80],['自习出勤',100,84]].map(([n,me,avg])=>`<div class="list-row"><span style="width:96px">${n}</span><div style="flex:1">${prog(me)}<div style="display:flex;height:6px;margin-top:3px"><i style="width:${avg}%;background:#D9DDF0;border-radius:99px"></i></div></div><b style="width:88px;text-align:right">${me}<small style="color:#9AA0B4;font-weight:400">/班均${avg}</small></b></div>`).join('')}</div>
+</div>
+<div class="card" style="margin-top:16px"><h3>🩺 学科能力雷达 · 数学</h3><div class="grid g2" style="align-items:center">
+${radar([{n:'函数与导数',v:62},{n:'数列',v:71},{n:'立体几何',v:88},{n:'概率统计',v:83},{n:'三角函数',v:76}])}
+<div style="font-size:13.5px;line-height:2.2">📉 <b>薄弱项</b>：函数与导数（62%）→ 已自动推送专项练习 6 道<br>📈 <b>进步项</b>：数列 +9%（较上周）<br>💡 <b>建议</b>：周末安排 1 次「导数专项」AI 自习室时段，教师端会同步布置针对性作业<br>💎 <b>深度版报告</b>：开通会员可解锁学科能力雷达 + 升学路径建议</div></div></div>`;
+
+PAGES['p-growth']=()=>`
+<div class="page-head"><div><h2>成长档案</h2><div class="desc">成绩 · 考勤 · 自习数据 · 奖惩 · 综合素质评价 → 成长时间轴</div></div><button class="btn btn-pri" data-action="noop">📄 导出档案</button></div>
+<div class="grid g2" style="grid-template-columns:1.3fr 1fr">
+<div class="card"><h3>🌱 成长时间轴</h3><div class="tl">
+  ${[['今天 10:24','班主任推送学情反馈：数学导数稍弱，已安排专项练习','b-blue'],
+     ['10-09','数学月考 <b>112 / 120</b>，班级第 5 名（↑3 名）','b-purple'],
+     ['10-08','获得本周 <b>「自习之星」</b> 称号（专注分年级 Top 5%）','b-orange'],
+     ['10-06','物理「力学专题」错题清零 ✅，二次练习正确率 94%','b-green'],
+     ['09-30','期中综合素质评价：<b>A</b>（身心健康 / 学业 / 实践全维度）','b-blue'],
+     ['09-25','加入 AI 自习室，累计自习 <b>26 小时</b>，出勤 100%','b-purple']]
+   .map(([t,d])=>`<div class="tl-item"><div class="t">${t}</div><div class="d">${d}</div></div>`).join('')}
+</div></div>
+<div class="card"><h3>📋 档案总览</h3>
+  <table><tr><th>维度</th><th>数据</th></tr>
+  ${[['累计自习时长','26.4 h'],['AI 答疑总数','87 题（思路引导模式）'],['错题归档 / 掌握','23 / 18'],['月考排名','班级 5 / 42'],['考勤出勤率','100%'],['获得荣誉','3 项']].map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table>
+  <div class="rule" style="margin-top:14px">🔐 档案数据加密存储，仅家长与授权教师可见，符合教育部教育数据规范。</div></div>
+</div>`;
+
+PAGES['p-member']=()=>`
+<div class="page-head"><div><h2>AI 答疑会员</h2><div class="desc">免费额度：每日 5 题 · 本月已用 96 题 · 会员解锁无限次答疑</div></div></div>
+<div class="grid g3" style="margin-bottom:16px">
+  <div class="plan"><h3>月度会员</h3><div class="price">¥29<small> / 月</small></div><ul><li>无限次 AI 答疑</li><li>错题精讲视频</li><li>每日学习日报推送</li></ul><button class="btn btn-ghost" style="width:100%;justify-content:center" data-action="buy" data-p="月度会员">立即开通</button></div>
+  <div class="plan best"><div class="corner">🔥 62% 家长选择</div><h3>季度会员</h3><div class="price">¥79<small> / 季</small></div><ul><li>无限次 AI 答疑</li><li>错题精讲 + 同类题无限练</li><li>周报学情深度解读</li><li>优先体验新功能</li></ul><button class="btn btn-pri" style="width:100%;justify-content:center" data-action="buy" data-p="季度会员">立即开通</button></div>
+  <div class="plan"><h3>年度会员</h3><div class="price">¥268<small> / 年</small></div><ul><li>含季度会员全部权益</li><li>成长报告深度版（学科雷达 + 升学路径建议）</li><li>个性化课程包 9 折（与 5G 高效课堂打通）</li></ul><button class="btn btn-ghost" style="width:100%;justify-content:center" data-action="buy" data-p="年度会员">立即开通</button></div>
+</div>
+<div class="card"><h3>🤖 答疑为什么值得开通？</h3><div class="grid g3" style="margin-top:4px">
+  ${[['🧭','思路引导','不给直接答案，分步引导孩子自己解题，拒绝「抄答案式」辅导'],['📚','K12 全学科','语数英物化生政史地全覆盖，P1 阶段主科准确率经教师抽检 ≥96%'],['⏱️','平均 2.1s 响应','孩子卡题不用等家长下班，焦虑当场化解']]
+  .map(([i,t,d])=>`<div style="padding:14px;border-radius:12px;background:#FAFAFE"><div style="font-size:24px">${i}</div><b style="display:block;margin:8px 0 4px">${t}</b><span style="font-size:12.5px;color:#6B7280;line-height:1.7">${d}</span></div>`).join('')}</div></div>`;
+
+PAGES['p-pay']=()=>`
+<div class="page-head"><div><h2>在线缴费</h2><div class="desc">学费 / 餐费 / 校服费 / 活动费 · 缴纳后电子收据自动生成</div></div><span class="badge b-orange">待缴 2 项 · ¥700</span></div>
+<div class="card"><h3>费用清单 · 2026 秋季学期</h3>
+<table><tr><th>项目</th><th>金额</th><th>状态</th><th>操作</th></tr>
+${[['学费（校端 SaaS 服务费）','¥3,800','<span class="badge b-green">已缴 · 09-01</span>','<button class="btn btn-ghost btn-sm" data-action="receipt" data-n="学费" data-m="3800">查看收据</button>'],
+   ['10 月餐费','¥520','<span class="badge b-orange">待缴 · 截止 10-15</span>','<button class="btn btn-pri btn-sm" data-action="pay" data-n="10月餐费" data-m="520">立即缴费</button>'],
+   ['秋季校服套装','¥260','<span class="badge b-green">已缴 · 09-03</span>','<button class="btn btn-ghost btn-sm" data-action="receipt" data-n="秋季校服" data-m="260">查看收据</button>'],
+   ['研学实践活动费','¥180','<span class="badge b-orange">待缴 · 截止 10-20</span>','<button class="btn btn-pri btn-sm" data-action="pay" data-n="研学活动费" data-m="180">立即缴费</button>']]
+ .map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table></div>`;
+
+PAGES['p-msg']=()=>`
+<div class="page-head"><div><h2>家校消息</h2><div class="desc">与班主任 / 科任老师单聊 · 支持图片、语音、文件</div></div></div>
+<div class="grid" style="grid-template-columns:250px 1fr">
+<div class="card" style="align-self:start"><h3>会话</h3>
+  ${[['张老师 · 班主任','专注分反馈…','现在','var(--green)',1],['王老师 · 数学','作业已批改完成','10:02','#2563EB',0],['班级群 · 高一(2)班','明天穿秋季校服','昨天','#7C3AED',3]].map(([n,p,t,c,un])=>`<div class="list-row" style="cursor:pointer"><div class="avatar" style="background:${c}">${n[0]}</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">${n}</div><div style="font-size:12px;color:#9AA0B4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p}</div></div><div style="text-align:right"><div style="font-size:11px;color:#9AA0B4">${t}</div>${un?`<span class="badge b-red" style="padding:1px 7px;margin-top:3px">${un}</span>`:''}</div></div>`).join('')}</div>
+<div class="card"><div class="chat-box" id="pchat">
+  <div class="msg"><div class="mv" style="background:#10B981">张</div><div class="bubble">林妈妈，小雨最近自习状态很好，专注分稳定在 85+。数学导数部分稍弱，我已给她推送一组基础同类题，麻烦周末督促完成 ✅</div></div>
+  ${state.parentMsgs||''}
+</div>
+<div style="display:flex;gap:10px;margin-top:14px">
+  <input id="pm-input" placeholder="输入消息…" style="flex:1;padding:11px 14px;border:1px solid var(--line);border-radius:12px;font-size:13.5px" onkeydown="if(event.key==='Enter')sendParentMsg()">
+  <button class="btn btn-ghost" data-action="noop">📎</button>
+  <button class="btn btn-pri" onclick="sendParentMsg()">发送</button></div></div></div>`;
+
+/* ---------------- 渲染与路由 ---------------- */
+const TAB_SHORT={'AI 自习室管理':'自习室','AI 自习室预约':'预约','AI 智能答疑':'答疑','数据看板':'看板','学习主页':'主页'};
+function renderNav(){
+  document.getElementById('nav').innerHTML=MENUS[state.role].map(m=>m[0].startsWith('—')?`<div class="nav-group">${m[0].slice(2)}</div>`:`<div class="nav-item ${state.page===m[0]?'active':''}" data-action="nav" data-page="${m[0]}"><span class="em">${m[1]}</span>${m[2]}</div>`).join('');
+  renderMobileTab();
+}
+function renderMobileTab(){
+  const items=MENUS[state.role].filter(m=>!m[0].startsWith('—'));
+  const tab=el=>`<span>${el[1]}</span>${TAB_SHORT[el[2]]||el[2]}`;
+  document.getElementById('mobile-tab').innerHTML=
+    items.slice(0,4).map(m=>`<div class="mtab ${state.page===m[0]?'on':''}" data-action="nav" data-page="${m[0]}">${tab(m)}</div>`).join('')
+    +`<div class="mtab" data-action="more"><span>☰</span>更多</div>`;
+  document.getElementById('sheet-body').innerHTML=
+    `<div style="font-size:12px;color:#9AA0B4;margin:0 8px 10px">${USERS[state.role].role} · ${USERS[state.role].name}（${USERS[state.role].cls}）</div>`
+    +items.map(m=>`<div class="sheet-item ${state.page===m[0]?'active':''}" data-action="nav" data-page="${m[0]}"><span class="em">${m[1]}</span>${m[2]}</div>`).join('')
+    +`<div class="sheet-item" data-action="exit"><span class="em">🔄</span>切换身份</div>`;
+}
+function openSheet(){document.getElementById('sheet-mask').classList.add('show');}
+function closeSheet(){document.getElementById('sheet-mask').classList.remove('show');}
+function renderPage(){
+  document.getElementById('view').innerHTML=PAGES[state.page]?PAGES[state.page]():'<div class="card">页面开发中…</div>';
+  const titles={dashboard:'数据看板','room-mgmt':'AI 自习室管理',attendance:'统一考勤',schedule:'智能排课',notice:'通知公告',approval:'校务审批','s-home':'学习主页','s-booking':'AI 自习室预约','s-ai':'AI 智能答疑','s-wrong':'错题本','s-report':'学习报告','t-home':'教学看板','t-homework':'智能作业','t-wrong':'错题聚合','t-monitor':'自习室监测','p-home':'今日概况','p-report':'学习周报','p-growth':'成长档案','p-member':'答疑会员','p-pay':'在线缴费','p-msg':'家校消息'};
+  const subs={dashboard:'明德中学试点数据总览','s-booking':'选时段 · 选座位 · 按周循环','s-ai':'拍照上传 · 分步思路引导','p-pay':'在线缴纳 · 电子收据','p-member':'无限次答疑 · 错题精讲'};
+  document.getElementById('crumb').innerHTML=`${titles[state.page]||'十二学智慧校园'}<small>${subs[state.page]||''}</small>`;
+  if(state.page==='notice')renderNotices();
+  document.getElementById('view').scrollTop=0;
+}
+function switchRole(role){
+  state.role=role;state.page=ROLE_HOME[role];
+  const u=USERS[role];
+  document.getElementById('tb-avatar').textContent=u.avatar;
+  document.getElementById('tb-user').textContent=u.name;
+  document.getElementById('tb-role').textContent=u.role;
+  document.getElementById('welcome').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  renderNav();renderPage();
+  showToast(`已进入${u.role} · ${u.name}（${u.cls}）`);
+}
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.innerHTML=`<span class="ok">✓</span>${msg}`;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2400);
+}
+function openModal(html){document.getElementById('modal').innerHTML=html;document.getElementById('mask').classList.remove('hidden');}
+function closeModal(){document.getElementById('mask').classList.add('hidden');}
+
+/* ---------------- 事件委托 ---------------- */
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-action]');
+  if(!el)return;
+  const a=el.dataset.action;
+  const acts={
+    'select-role':()=>switchRole(el.dataset.role),
+    'exit':()=>{closeSheet();document.getElementById('app').classList.add('hidden');document.getElementById('welcome').classList.remove('hidden');},
+    'more':openSheet,
+    'close-sheet':closeSheet,
+    'nav':()=>{state.page=el.dataset.page;closeSheet();renderNav();renderPage();},
+    'noop':()=>showToast('演示原型：该操作已记录（未接入真实后端）'),
+    // 自习室
+    'pick-slot':()=>{state.selSlot=el.dataset.id;renderPage();},
+    'toggle-recurring':()=>{state.recurring=el.checked;},
+    'pick-seat':()=>{state.selSeat=+el.dataset.i;renderPage();},
+    'confirm-booking':()=>{
+      if(state.selSeat===null)return;
+      state.booked=state.seats[state.selSeat].id;
+      state.seats[state.selSeat].state='mine';
+      state.bookings=Math.min(6,state.bookings+1);
+      showToast(`预约成功：今晚 ${state.selSlot==1?'18:30–20:00':'20:10–21:40'} · 座位 ${state.booked}`);
+      state.page='s-home';renderNav();renderPage();},
+    'face-checkin':()=>{state.signed=true;renderPage();showToast('人脸签到成功（0.5s）· 已实时同步家长端');},
+    'cancel-booking':()=>{state.booked=null;state.signed=false;state.bookings=Math.max(0,state.bookings-1);renderPage();showToast('预约已取消（提前 >2 小时，不计违约）');},
+    // AI 答疑
+    'ask':()=>{
+      if(state.askCount>=5){switchRole('parent');state.page='p-member';renderNav();renderPage();showToast('今日 5 题免费额度已用完 · 开通家长会员解锁无限次答疑');return;}
+      if(state.chat.length>=2){showToast('演示原型：示例题库已全部展示');return;}
+      state.chat.push(aiBubble(el.dataset.q));
+      state.askCount++;
+      renderPage();
+      showToast(`AI 解析完成（2.1s）· 剩余免费 ${5-state.askCount} 题`);},
+    // 管理
+    'send-notice':()=>{
+      const t=document.getElementById('n-title').value.trim();
+      const lvl=document.getElementById('n-level').value.replace(/^(📢|❗|🚨)\s*/,'').replace(/（.*）/,'');
+      if(!t){showToast('请输入通知标题');return;}
+      NOTICES.unshift({t,lv:lvl,read:0,time:'刚刚',scope:'全校'});
+      document.getElementById('n-title').value='';document.getElementById('n-body').value='';
+      renderNotices();showToast(`${lvl}通知已发送，推送 1,842 名家长与学生`);},
+    'auto-schedule':()=>{showToast('自动排课完成：冲突已消除 · 高一(2)班物理调整至 A305 实验室');setTimeout(()=>{state.page='schedule';renderPage();},600);},
+    'ap-ok':()=>{markAp(el.dataset.id,true);},
+    'ap-no':()=>{markAp(el.dataset.id,false);},
+    // 教师
+    'push-practice':()=>showToast(`已向 42 名学生推送「${el.dataset.n}」同类练习（8 道 · 同难度）`),
+    'hw-modal':()=>openModal(`<h3 style="margin-bottom:14px">📝 布置新作业</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:13.5px">
+      <input placeholder="作业标题，如：导数专项练习" style="padding:11px 14px;border:1px solid var(--line);border-radius:10px">
+      <div style="display:flex;gap:10px"><input placeholder="题量，如 12" style="flex:1;padding:11px 14px;border:1px solid var(--line);border-radius:10px"><input placeholder="截止时间，如 10-12 21:00" style="flex:1;padding:11px 14px;border:1px solid var(--line);border-radius:10px"></div>
+      <select style="padding:11px 14px;border:1px solid var(--line);border-radius:10px"><option>从题库选择：知识点 → 函数与导数</option><option>从错题本智能组卷（推荐）</option><option>手动上传试卷</option></select>
+      <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" checked> 客观题由 AI 自动批改</label>
+      <button class="btn btn-pri" style="justify-content:center" data-action="hw-done">发布作业</button></div>`),
+    'hw-done':()=>{closeModal();showToast('作业已发布至高一(2)班 · 42 名学生已收到通知');},
+    // 家长
+    'buy':()=>openModal(`<div style="text-align:center"><div style="font-size:40px">💎</div><h3 style="margin:10px 0 6px">开通${el.dataset.p}</h3><p style="color:#6B7280;font-size:13px;margin-bottom:16px">演示原型 · 实际环境将拉起微信支付</p><button class="btn btn-pri" style="width:100%;justify-content:center" data-action="close-modal-toast">模拟支付成功</button></div>`),
+    'pay':()=>{const n=el.dataset.n,m=el.dataset.m;
+      state.payDone[n]=true;el.closest('tr').querySelector('td:nth-child(3)').innerHTML='<span class="badge b-green">已缴 · 刚刚</span>';el.closest('td').innerHTML='<button class="btn btn-ghost btn-sm" data-action="receipt" data-n="'+n+'" data-m="'+m+'">查看收据</button>';
+      showToast(`缴费成功 ¥${m} · 电子收据已生成`);},
+    'receipt':()=>openModal(`<div style="text-align:center"><div style="font-size:36px">🧾</div><h3 style="margin:8px 0 2px">电子收据</h3><div style="font-size:12px;color:#9AA0B4;margin-bottom:16px">NO. SZXJ-20261010-${el.dataset.m}${Math.floor(Math.random()*90+10)}</div></div>
+      <table style="font-size:13.5px"><tr><td style="color:#6B7280">缴费项目</td><td style="text-align:right"><b>${el.dataset.n}</b></td></tr><tr><td style="color:#6B7280">学生</td><td style="text-align:right">林小雨 · 高一(2)班</td></tr><tr><td style="color:#6B7280">金额</td><td style="text-align:right"><b style="color:var(--primary);font-size:18px">¥ ${el.dataset.m}</b></td></tr><tr><td style="color:#6B7280">缴纳时间</td><td style="text-align:right">2026-10-10</td></tr><tr><td style="color:#6B7280">收款方</td><td style="text-align:right">明德中学</td></tr></table>
+      <div style="margin-top:18px;text-align:center;color:#059669;font-size:12.5px">✓ 明德中学电子收据专用章</div>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:14px" data-action="close-modal">关闭</button>`),
+    'close-modal':closeModal,
+    'close-modal-toast':()=>{closeModal();showToast('会员开通成功（模拟）· 无限次答疑已解锁');},
+    // 报告 tab
+    'rtab':()=>{document.querySelectorAll('[data-action="rtab"]').forEach(b=>b.classList.toggle('on',b===el));
+      document.getElementById('report-day').classList.toggle('hidden',el.dataset.t!=='day');
+      document.getElementById('report-week').classList.toggle('hidden',el.dataset.t!=='week');}
+  };
+  if(acts[a])acts[a]();
+});
+function markAp(id,ok){
+  const card=document.getElementById('btns-'+id)?.closest('.card');
+  if(!card)return;
+  card.querySelector('h3 div, .badge')?.remove;
+  card.innerHTML=`<div style="display:flex;align-items:center;gap:14px"><div style="font-size:28px">${ok?'✅':'❌'}</div><div><b>${ok?'已同意':'已驳回'}</b><div style="font-size:12.5px;color:#6B7280;margin-top:4px">审批完成 · 结果已推送申请人 · 平均办结 3.2h 保持中</div></div></div>`;
+  showToast(ok?'审批同意，已通知申请人':'已驳回，已通知申请人补充材料');
+}
+document.getElementById('mask').addEventListener('click',e=>{if(e.target.id==='mask')closeModal();});
+document.getElementById('sheet-mask').addEventListener('click',e=>{if(e.target.id==='sheet-mask')closeSheet();});
+function sendParentMsg(){
+  const inp=document.getElementById('pm-input');
+  const v=inp.value.trim();if(!v)return;
+  state.parentMsgs=(state.parentMsgs||'')+`<div class="msg me"><div class="mv" style="background:#2563EB">林</div><div class="bubble">${v.replace(/</g,'&lt;')}</div></div>`;
+  inp.value='';renderPage();
+  setTimeout(()=>{state.parentMsgs+=`<div class="msg"><div class="mv" style="background:#10B981">张</div><div class="bubble">收到，有情况我随时同步您 👌</div></div>`;renderPage();},900);
+}
+</script>
+</body>
+</html>
